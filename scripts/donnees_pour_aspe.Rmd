@@ -1,0 +1,105 @@
+---
+title: "Préparation des données pour le package"
+author: "OFB - DR Bretagne"
+date: "03/07/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(aspe)
+
+load(file = "../../aspe_demo/raw_data/toutes_tables_aspe_sauf_mei.RData")
+```
+
+## Importation des statuts liste rouge
+
+Les données sont téléchargées depuis [https://inpn.mnhn.fr/espece/listerouge/fr/poissons_eau_douce_metropole_2019](https://inpn.mnhn.fr/espece/listerouge/fr/poissons_eau_douce_metropole_2019).
+
+```{r}
+lr <- read_csv2("../raw_data/Liste rouge des poissons d'eau douce de France métropolitaine (2019)_202173.csv") %>% 
+  rename(esp_code_taxref = CD_REF)
+```
+
+Pour une procédure plus automatique on peut aussi charger ces données depuis l'API liste rouge :
+
+- Demander un jeton (*token*) permettant d'interroger l'API liste rouge depuis l'adresse [https://apiv3.iucnredlist.org/api/v3/token](https://apiv3.iucnredlist.org/api/v3/token).
+- Charger les données au moyen du package `rredlist`.
+
+## Traits poissons
+
+Ce tableau a été initialement constitué "à la main" par T. Oberdorff (IRD) et T. Vigneron (OFB). Il reste perfectible.
+
+```{r}
+data("traits_poissons")
+
+traits_poissons %>% DT::datatable()
+```
+
+## Correspondance codes CSP et TAXREF
+
+Opération un peu chronophage car télécharge tout TAXREF.
+
+
+```{r}
+passage <- imp_corres_aspe_taxref() %>% 
+  mutate(code_taxref = as.integer(code_taxref))
+```
+
+## Assemblage
+
+
+```{r}
+traits_poissons2 <- traits_poissons %>% 
+  left_join(y = passage %>% 
+              rename(esp_code_alternatif = code_aspe,
+                     esp_code_taxref = code_taxref)) %>%
+  left_join(y = ref_espece %>%
+              select(esp_code_alternatif,
+                     esp_nom_latin))
+```
+
+Gestion de quelques cas à problème comme les carpes (ex : CCO) qui n'ont pas de code taxref proposé avant d'ajouter les statuts liste rouge.
+
+
+```{r}
+traits_poissons2 <- traits_poissons2 %>%
+  mutate(
+    esp_code_taxref = case_when(
+      is.na(esp_code_taxref) & esp_nom_latin == "Cyprinus carpio" ~ 67058,
+      is.na(esp_code_taxref) & esp_code_alternatif == "GFL" ~ 70166,
+      is.na(esp_code_taxref) & esp_code_alternatif == "MUC" ~ 69772,
+      is.na(esp_code_taxref) & esp_code_alternatif == "CAA" ~ 67208,
+      TRUE ~ as.double(esp_code_taxref)
+    )
+  ) %>%
+  left_join(
+    y = lr %>%
+      select(
+        esp_code_taxref,
+        statut_lr_fr = STATUT,
+        statut_lr_int = STATUT_I,
+        statut_lr_eu  = STATUT_EU
+      ) %>%
+      mutate(esp_code_taxref = as.numeric(esp_code_taxref))
+  ) %>%
+  select(esp_code_alternatif,
+         esp_code_taxref,
+         everything())
+
+# verif
+# esp_manquantes <- traits_poissons2 %>%
+#   filter(is.na(esp_code_taxref)) %>%
+#   select(esp_code_alternatif) %>%
+#   left_join(y = ref_espece) %>%
+#   select(esp_code_alternatif, esp_nom_latin)
+
+traits_poissons3 <- traits_poissons2 %>% 
+  
+```
+
+
