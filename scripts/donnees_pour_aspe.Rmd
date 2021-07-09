@@ -27,21 +27,10 @@ Il s'agit ici de préparer des données sur les espèces qui seront incluses dan
 
 ## Données Aspe
 
-On charge ici toutes les tables de la base Aspe à l'exception de `mesure_individuelle`. On s'intéressera en particulier aux tables `lot_poissons` pour identifier les espèces présentes dans les échantillons et `ref_espece` qui fait la correspondance entre codes Aspe à trois lettres, code sandre et nom latin. 
+On charge ici toutes les tables de la base Aspe à l'exception de `mesure_individuelle`. On aura en particulier besoin de la table `ref_espece` qui fait la correspondance entre codes Aspe à trois lettres, code sandre et nom latin. 
 
 ```{r}
 load(file = "../../aspe_demo/raw_data/toutes_tables_aspe_sauf_mei.RData")
-```
-
-Collecte d'un vecteur caractère contenant les codes en trois lettres des taxons présents dans les échantillons.
-
-```{r}
-mes_especes <- lot_poissons %>% 
-  rename(esp_id = lop_esp_id) %>% 
-  left_join(y = ref_espece %>% 
-              select(esp_id, esp_code_alternatif)) %>% 
-  pull(esp_code_alternatif) %>% 
-  unique()
 ```
 
 ## Correspondance codes taxonomiques
@@ -70,6 +59,8 @@ passerelle_taxo <- passerelle_taxo %>%
       TRUE ~ as.double(esp_code_taxref)
     )
   )
+
+passerelle_taxo %>% DT::datatable(rownames = FALSE)
 ```
 ## Importation des statuts listes rouges
 
@@ -77,7 +68,21 @@ Les données sont téléchargées depuis [https://inpn.mnhn.fr/espece/listerouge
 
 ```{r}
 liste_rouge <- read_csv2("../raw_data/Liste rouge des poissons d'eau douce de France métropolitaine (2019)_202173.csv") %>% 
-  rename(esp_code_taxref = CD_REF)
+  rename(esp_code_taxref = CD_REF) %>% 
+  left_join(passerelle_taxo) %>% 
+  select(esp_nom_latin,
+         esp_code_taxref,
+         esp_code_alternatif,
+         endemisme = ENDEMISME,
+         statut_lr_fr = STATUT,
+         tendance_lr_fr = TENDANCE,
+         statut_lr_int = STATUT_I,
+         statut_lr_eu = STATUT_EU
+         ) %>% 
+  mutate_at(vars(starts_with("statut_lr")),
+            fct_relevel,
+            c("DD", "LC", "NT", "VU", "EN", "CR", "EX")) %>% 
+  filter(!is.na(esp_code_alternatif))
 ```
 
 Pour une procédure plus automatique on peut aussi charger ces données depuis l'API liste rouge :
@@ -92,7 +97,7 @@ Ce tableau a été constitué "à la main" par T. Oberdorff (IRD) et T. Vigneron
 ```{r}
 traits_bio <- readxl::read_xlsx("../raw_data/traits_bio.xlsx")
 
-traits_bio %>% DT::datatable()
+traits_bio %>% DT::datatable(rownames = FALSE)
 ```
 
 
