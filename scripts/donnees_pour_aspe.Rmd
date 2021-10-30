@@ -30,7 +30,7 @@ Il s'agit ici de préparer des données sur les espèces qui seront incluses dan
 On charge ici toutes les tables de la base Aspe à l'exception de `mesure_individuelle`. On aura en particulier besoin de la table `ref_espece` qui fait la correspondance entre codes Aspe à trois lettres, code sandre et nom latin. 
 
 ```{r}
-load(file = "../../aspe_demo/raw_data/toutes_tables_aspe_sauf_mei.RData")
+load(file = "../../aspe_demo/raw_data/tables_sauf_mei_2021_09_10_14_35_58.RData")
 ```
 
 ## Correspondance codes taxonomiques
@@ -56,6 +56,7 @@ passerelle_taxo <- passerelle_taxo %>%
       is.na(esp_code_taxref) & esp_code_alternatif == "GFL" ~ 70166,
       is.na(esp_code_taxref) & esp_code_alternatif == "MUC" ~ 69772,
       is.na(esp_code_taxref) & esp_code_alternatif == "CAA" ~ 67208,
+      is.na(esp_code_taxref) & esp_code_alternatif == "VAX" ~ 194072,
       TRUE ~ as.double(esp_code_taxref)
     )
   )
@@ -85,10 +86,18 @@ liste_rouge <- read_csv2("../raw_data/Liste rouge des poissons d'eau douce de Fr
   filter(!is.na(esp_code_alternatif))
 ```
 
-Pour une procédure plus automatique on peut aussi charger ces données depuis l'API liste rouge :
+Pour une procédure plus automatique on peut aussi charger certaines de ces données depuis l'API liste rouge :
 
 - Demander un jeton (*token*) permettant d'interroger l'API liste rouge depuis l'adresse [https://apiv3.iucnredlist.org/api/v3/token](https://apiv3.iucnredlist.org/api/v3/token).
 - Charger les données au moyen du package `rredlist`.
+
+```{r, eval = FALSE}
+red_list <- rredlist::rl_sp_country(country = 'FR',
+                                    key = 'MON_JETON') %>%
+  .$result
+```
+
+NB : la valeur du jeton peut être stockée avec la fonction `rstudioapi::askForSecret()`.
 
 ## Traits poissons
 
