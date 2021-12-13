@@ -19,19 +19,46 @@ library(aspe)
 
 ## Objectif
 
-Il s'agit ici de préparer des données sur les espèces qui seront incluses dans le package :
+Il s'agit ici de préparer d'une part les intitulés "en clair" des champs de la base Aspe et d'autre part des données sur les espèces :
 
 - Table passerelle entre codes taxonomiques Taxref, Sandre et Aspe
 - Traits biologiques
 - Statut listes rouges
 
+Ces `dataframes` seront inclus dans le package.
+
 ## Données Aspe
 
 On charge ici toutes les tables de la base Aspe à l'exception de `mesure_individuelle`. On aura en particulier besoin de la table `ref_espece` qui fait la correspondance entre codes Aspe à trois lettres, code sandre et nom latin. 
 
-```{r}
-load(file = "../../aspe_demo/raw_data/tables_sauf_mei_2021_09_10_14_35_58.RData")
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+library(aspe)
+library(tidyverse)
+
+rdata_tables <- misc_nom_dernier_fichier(repertoire = "../../../raw_data",
+                                         pattern = "^tables")
+
+load(rdata_tables)
+
+rm(rdata_tables)
 ```
+
+## Intitulés des champs
+
+Le intitulés détaillés des champs sont stockés dans le dump de la base sous forme de commentaires. Ils peuvent être extraits par la fonction `expl_commentaires_champs()` du package `aspe`.
+
+```{r}
+# recherche du nom du fichier le plus récent au format .gz dans le répertoire des données brutes
+dump <- misc_nom_dernier_fichier(repertoire = "../../../raw_data",
+                                         pattern = "gz$")
+
+# extraction des commentaires
+champs_aspe <- expl_commentaires_champs(fichier_dump = dump)
+
+DT::datatable(champs_aspe,
+              rownames = FALSE)
+```
+
 
 ## Correspondance codes taxonomiques
 
@@ -116,5 +143,6 @@ traits_bio %>% DT::datatable(rownames = FALSE)
 save(passerelle_taxo, file = "../processed_data/passerelle_taxo.RData")
 save(liste_rouge, file = "../processed_data/liste_rouge.RData")
 save(traits_bio, file = "../processed_data/traits_bio.RData")
+save(champs_aspe, file = "../processed_data/champs_aspe.RData")
 ```
 
