@@ -43,7 +43,7 @@ load(rdata_tables)
 rm(rdata_tables)
 ```
 
-## Intitulés des champs
+## Dictionnaire de données
 
 Le intitulés détaillés des champs sont stockés dans le dump de la base sous forme de commentaires. Ils peuvent être extraits par la fonction `expl_commentaires_champs()` du package `aspe`.
 
@@ -53,9 +53,9 @@ dump <- misc_nom_dernier_fichier(repertoire = "../../../raw_data",
                                          pattern = "gz$")
 
 # extraction des commentaires
-champs_aspe <- expl_commentaires_champs(fichier_dump = dump)
+dictionnaire <- expl_commentaires_champs(fichier_dump = dump)
 
-DT::datatable(champs_aspe,
+DT::datatable(dictionnaire,
               rownames = FALSE)
 ```
 
@@ -143,6 +143,6 @@ traits_bio %>% DT::datatable(rownames = FALSE)
 save(passerelle_taxo, file = "../processed_data/passerelle_taxo.RData")
 save(liste_rouge, file = "../processed_data/liste_rouge.RData")
 save(traits_bio, file = "../processed_data/traits_bio.RData")
-save(champs_aspe, file = "../processed_data/champs_aspe.RData")
+save(dictionnaire, file = "../processed_data/dictionnaire.RData")
 ```
 
