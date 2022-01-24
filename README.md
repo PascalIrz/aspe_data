@@ -1,6 +1,6 @@
 # aspe_data
 
-Préparation des données incluses dans le package.
+Préparation des données incluses dans le package {aspe}.
 
 # Utilisation
 
